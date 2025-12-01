@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.5.002.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "talearc-backend", "talearc-backend.csproj", "{E9CCCEC2-892A-40E1-B279-A2FBE29D8B22}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{E9CCCEC2-892A-40E1-B279-A2FBE29D8B22}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E9CCCEC2-892A-40E1-B279-A2FBE29D8B22}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E9CCCEC2-892A-40E1-B279-A2FBE29D8B22}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E9CCCEC2-892A-40E1-B279-A2FBE29D8B22}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {D9E743FD-4051-44C7-9869-C209A5701C7D}
+	EndGlobalSection
+EndGlobal
