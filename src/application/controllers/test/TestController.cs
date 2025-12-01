@@ -23,7 +23,7 @@ public class TestController : ControllerBase
 
         string responseMessage = $"你好，{request.Name}！你今年 {request.Age} 岁了。你的请求已成功处理。";
  
-        var response = ApiResponse<string>.Success(responseMessage);
+        var response = ApiResponse.Success(responseMessage);
         
         return Ok(response); 
     }
