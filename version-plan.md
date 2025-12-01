@@ -3,7 +3,7 @@
 
 postgresql连接验证
 
-api请求，singalR验证
+api请求
 
 ## 0.2
 最小登录校验结构

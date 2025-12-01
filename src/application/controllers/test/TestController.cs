@@ -14,7 +14,7 @@ public class GreetingForm
 }
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("talearc/api/[controller]")]
 public class TestController : ControllerBase
 {
    [HttpPost("greet")] 
