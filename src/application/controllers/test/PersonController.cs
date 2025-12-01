@@ -17,7 +17,7 @@ public class PersonController : ControllerBase
         _context = context;
     }
 
-    [HttpGet]
+    [HttpGet("list")]
     public async Task<IActionResult> GetPersons()
     {
         var persons = await _context.Person.ToListAsync();
