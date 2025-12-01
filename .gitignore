@@ -26,6 +26,10 @@ bld/
 [Ll]og/
 [Ll]ogs/
 
+# Application logs
+logs/
+*.log
+
 ## Visual Studio / Rider specific
 .vs/
 .idea/

@@ -15,15 +15,18 @@ public class GreetingForm
 
 [ApiController]
 [Route("talearc/api/[controller]")]
-public class TestController : ControllerBase
+public class TestController(ILogger<TestController> logger) : ControllerBase
 {
-   [HttpPost("greet")] 
+    private readonly ILogger<TestController> _logger = logger;
+    [HttpPost("greet")] 
     public IActionResult Greet([FromBody] GreetingForm request)
     {
+        _logger.LogInformation("收到问候请求: 姓名={Name}, 年龄={Age}", request.Name, request.Age);
 
         string responseMessage = $"你好，{request.Name}！你今年 {request.Age} 岁了。你的请求已成功处理。";
  
         var response = ApiResponse.Success(responseMessage);
+        _logger.LogInformation("问候请求处理成功");
         
         return Ok(response); 
     }
@@ -31,6 +34,7 @@ public class TestController : ControllerBase
     [HttpGet("fail-test")]
     public IActionResult FailTest()
     {
+        _logger.LogWarning("模拟失败测试被调用");
   
         var errorResponse = ApiResponse.Fail(500, "这是一个模拟的服务器内部错误。");
 

@@ -23,7 +23,8 @@ public class GlobalExceptionMiddleware
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "发生未处理的异常");
+            _logger.LogError(ex, "发生未处理的异常: {RequestPath} {RequestMethod}", 
+                context.Request.Path, context.Request.Method);
             await HandleExceptionAsync(context, ex);
         }
     }
