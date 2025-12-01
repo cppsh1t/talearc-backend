@@ -35,7 +35,11 @@ public class GlobalExceptionMiddleware
 
         var response = ApiResponse.Fail(500, "服务器内部错误");
 
-        var jsonResponse = JsonSerializer.Serialize(response);
+        var options = new JsonSerializerOptions
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+        };
+        var jsonResponse = JsonSerializer.Serialize(response, options);
         await context.Response.WriteAsync(jsonResponse);
     }
 }

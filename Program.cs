@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using talearc_backend.src.data;
 using talearc_backend.src.middleware;
 using talearc_backend.src.utils;
+using System.Text.Json;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -11,6 +12,10 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 builder.Services.AddControllers(options =>
 {
     options.Conventions.Add(new Microsoft.AspNetCore.Mvc.ApplicationModels.RouteTokenTransformerConvention(new SlugifyParameterTransformer()));
+})
+.AddJsonOptions(options =>
+{
+    options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
 });
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();

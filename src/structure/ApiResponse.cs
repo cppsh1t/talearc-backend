@@ -1,18 +1,11 @@
 namespace talearc_backend.src.structure;
 
 // 内部数据类
-public class ApiResponse<T>
+public class ApiResponse<T>(int code, string message, T? data)
 {
-    public int Code { get; set; }
-    public string Message { get; set; }
-    public T? Data { get; set; }
-
-    public ApiResponse(int code, string message, T? data)
-    {
-        Code = code;
-        Message = message;
-        Data = data;
-    }
+    public int Code { get; set; } = code;
+    public string Message { get; set; } = message;
+    public T? Data { get; set; } = data;
 }
 
 // 外部工具类，利用泛型推断

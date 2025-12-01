@@ -8,14 +8,9 @@ namespace talearc_backend.src.application.controllers.test;
 
 [ApiController]
 [Route("talearc/api/[controller]")]
-public class PersonController : ControllerBase
+public class PersonController(AppDbContext context) : ControllerBase
 {
-    private readonly AppDbContext _context;
-
-    public PersonController(AppDbContext context)
-    {
-        _context = context;
-    }
+    private readonly AppDbContext _context = context;
 
     [HttpGet("list")]
     public async Task<IActionResult> GetPersons()
