@@ -1,14 +1,30 @@
 namespace talearc_backend.src.structure;
 
-// 内部数据类
+/// <summary>
+/// API 响应统一格式
+/// </summary>
+/// <typeparam name="T">响应数据类型</typeparam>
 public class ApiResponse<T>(int code, string message, T? data)
 {
+    /// <summary>
+    /// 响应状态码
+    /// </summary>
     public int Code { get; set; } = code;
+    
+    /// <summary>
+    /// 响应消息
+    /// </summary>
     public string Message { get; set; } = message;
+    
+    /// <summary>
+    /// 响应数据
+    /// </summary>
     public T? Data { get; set; } = data;
 }
 
-// 外部工具类，利用泛型推断
+/// <summary>
+/// API 响应工具类
+/// </summary>
 public static class ApiResponse
 {
     public static ApiResponse<T> Success<T>(T data, string message = "操作成功")
