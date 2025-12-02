@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using talearc_backend.src.data;
@@ -9,6 +10,7 @@ namespace talearc_backend.src.application.controllers.test;
 /// <summary>
 /// 用户管理控制器
 /// </summary>
+[Authorize]
 [ApiController]
 [Route("talearc/api/[controller]")]
 public class UserController(AppDbContext context, ILogger<UserController> logger) : ControllerBase

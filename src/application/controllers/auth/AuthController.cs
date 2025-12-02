@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
@@ -5,6 +6,7 @@ using talearc_backend.src.data;
 using talearc_backend.src.data.dto;
 using talearc_backend.src.data.extensions;
 using talearc_backend.src.structure;
+using talearc_backend.src.utils;
 
 namespace talearc_backend.src.application.controllers.auth;
 
@@ -33,20 +35,21 @@ public class LoginForm
 /// </summary>
 [ApiController]
 [Route("talearc/api/[controller]")]
-public class AuthController(AppDbContext context, ILogger<AuthController> logger) : ControllerBase
+public class AuthController(AppDbContext context, ILogger<AuthController> logger, JwtTokenGenerator tokenGenerator) : ControllerBase
 {
     private readonly AppDbContext _context = context;
     private readonly ILogger<AuthController> _logger = logger;
+    private readonly JwtTokenGenerator _tokenGenerator = tokenGenerator;
 
     /// <summary>
     /// 用户登录
     /// </summary>
     /// <param name="loginForm">登录表单</param>
     /// <returns>登录结果</returns>
-    /// <response code="200">登录成功，返回用户信息</response>
+    /// <response code="200">登录成功，返回 Token 和用户信息</response>
     /// <response code="401">登录失败，用户名或密码错误</response>
     [HttpPost("login")]
-    [ProducesResponseType(typeof(ApiResponse<UserDto>), 200)]
+    [ProducesResponseType(typeof(ApiResponse<LoginResponseDto>), 200)]
     [ProducesResponseType(typeof(ApiResponse<object>), 401)]
     public async Task<IActionResult> Login([FromBody] LoginForm loginForm)
     {
@@ -65,9 +68,16 @@ public class AuthController(AppDbContext context, ILogger<AuthController> logger
             }
             
             var userDto = user.ToDto();
+            var token = _tokenGenerator.GenerateToken(user.Id, user.Name);
+            
+            var loginResponse = new LoginResponseDto
+            {
+                Token = token,
+                User = userDto
+            };
             
             _logger.LogInformation("用户登录成功: {Name}", loginForm.Name);
-            var response = ApiResponse.Success(userDto, "登录成功");
+            var response = ApiResponse.Success(loginResponse, "登录成功");
             return Ok(response);
         }
         catch (Exception ex)
@@ -75,5 +85,23 @@ public class AuthController(AppDbContext context, ILogger<AuthController> logger
             _logger.LogError(ex, "登录过程中发生错误");
             throw;
         }
+    }
+    
+    /// <summary>
+    /// 用户登出
+    /// </summary>
+    /// <returns>登出结果</returns>
+    /// <response code="200">登出成功</response>
+    /// <response code="401">未授权</response>
+    [Authorize]
+    [HttpPost("logout")]
+    [ProducesResponseType(typeof(ApiResponse<object>), 200)]
+    [ProducesResponseType(typeof(ApiResponse<object>), 401)]
+    public IActionResult Logout()
+    {
+        var userName = User.Identity?.Name;
+        _logger.LogInformation("用户登出: {Name}", userName);
+        var response = ApiResponse.Success<object>(null!, "登出成功");
+        return Ok(response);
     }
 }

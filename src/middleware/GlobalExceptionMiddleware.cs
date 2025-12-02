@@ -8,6 +8,10 @@ public class GlobalExceptionMiddleware
 {
     private readonly RequestDelegate _next;
     private readonly ILogger<GlobalExceptionMiddleware> _logger;
+    private static readonly JsonSerializerOptions JsonOptions = new()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+    };
 
     public GlobalExceptionMiddleware(RequestDelegate next, ILogger<GlobalExceptionMiddleware> logger)
     {
@@ -35,12 +39,7 @@ public class GlobalExceptionMiddleware
         context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
 
         var response = ApiResponse.Fail(500, "服务器内部错误");
-
-        var options = new JsonSerializerOptions
-        {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-        };
-        var jsonResponse = JsonSerializer.Serialize(response, options);
+        var jsonResponse = JsonSerializer.Serialize(response, JsonOptions);
         await context.Response.WriteAsync(jsonResponse);
     }
 }
