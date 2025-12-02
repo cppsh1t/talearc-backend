@@ -3,7 +3,7 @@ using System.Security.Claims;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 
-namespace talearc_backend.src.utils;
+namespace talearc_backend.src.application.service;
 
 public class JwtTokenGenerator
 {

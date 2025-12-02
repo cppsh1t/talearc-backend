@@ -2,11 +2,12 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
+using System.Security.Claims;
 using talearc_backend.src.data;
 using talearc_backend.src.data.dto;
 using talearc_backend.src.data.extensions;
 using talearc_backend.src.structure;
-using talearc_backend.src.utils;
+using talearc_backend.src.application.service;
 
 namespace talearc_backend.src.application.controllers.auth;
 
@@ -35,11 +36,12 @@ public class LoginForm
 /// </summary>
 [ApiController]
 [Route("talearc/api/[controller]")]
-public class AuthController(AppDbContext context, ILogger<AuthController> logger, JwtTokenGenerator tokenGenerator) : ControllerBase
+public class AuthController(AppDbContext context, ILogger<AuthController> logger, JwtTokenGenerator tokenGenerator, TokenBlacklistService blacklistService) : ControllerBase
 {
     private readonly AppDbContext _context = context;
     private readonly ILogger<AuthController> _logger = logger;
     private readonly JwtTokenGenerator _tokenGenerator = tokenGenerator;
+    private readonly TokenBlacklistService _blacklistService = blacklistService;
 
     /// <summary>
     /// 用户登录
@@ -88,6 +90,39 @@ public class AuthController(AppDbContext context, ILogger<AuthController> logger
     }
     
     /// <summary>
+    /// 获取当前用户信息
+    /// </summary>
+    /// <returns>用户信息</returns>
+    /// <response code="200">成功返回用户信息</response>
+    /// <response code="401">未授权</response>
+    [Authorize]
+    [HttpGet("userinfo")]
+    [ProducesResponseType(typeof(ApiResponse<UserDto>), 200)]
+    [ProducesResponseType(typeof(ApiResponse<object>), 401)]
+    public async Task<IActionResult> GetUserInfo()
+    {
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        
+        if (!int.TryParse(userIdClaim, out var userId))
+        {
+            _logger.LogWarning("无效的用户ID");
+            return Unauthorized(ApiResponse.Fail(401, "无效的用户信息"));
+        }
+        
+        var user = await _context.Users.FindAsync(userId);
+        if (user == null)
+        {
+            _logger.LogWarning("用户不存在: {UserId}", userId);
+            return Unauthorized(ApiResponse.Fail(401, "用户不存在"));
+        }
+        
+        var userDto = user.ToDto();
+        _logger.LogInformation("获取用户信息: {Name}", user.Name);
+        var response = ApiResponse.Success(userDto, "获取成功");
+        return Ok(response);
+    }
+    
+    /// <summary>
     /// 用户登出
     /// </summary>
     /// <returns>登出结果</returns>
@@ -97,11 +132,32 @@ public class AuthController(AppDbContext context, ILogger<AuthController> logger
     [HttpPost("logout")]
     [ProducesResponseType(typeof(ApiResponse<object>), 200)]
     [ProducesResponseType(typeof(ApiResponse<object>), 401)]
-    public IActionResult Logout()
+    public async Task<IActionResult> Logout()
     {
         var userName = User.Identity?.Name;
+        var authHeader = Request.Headers.Authorization.ToString();
+        
+        if (!string.IsNullOrEmpty(authHeader) && authHeader.StartsWith("Bearer "))
+        {
+            var token = authHeader["Bearer ".Length..].Trim();
+            var expiresAtClaim = User.FindFirst("exp")?.Value;
+            
+            if (long.TryParse(expiresAtClaim, out var unixTime))
+            {
+                var expiresAt = UnixTimeStampToDateTime(unixTime);
+                await _blacklistService.AddToBlacklistAsync(token, expiresAt);
+            }
+        }
+        
         _logger.LogInformation("用户登出: {Name}", userName);
         var response = ApiResponse.Success<object>(null!, "登出成功");
         return Ok(response);
+    }
+    
+    private static DateTime UnixTimeStampToDateTime(long unixTimeStamp)
+    {
+        var dateTime = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
+        dateTime = dateTime.AddSeconds(unixTimeStamp).ToUniversalTime();
+        return dateTime;
     }
 }
