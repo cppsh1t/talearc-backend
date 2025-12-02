@@ -36,12 +36,11 @@ public class LoginForm
 /// </summary>
 [ApiController]
 [Route("talearc/api/[controller]")]
-public class AuthController(AppDbContext context, ILogger<AuthController> logger, JwtTokenGenerator tokenGenerator, TokenBlacklistService blacklistService) : ControllerBase
+public class AuthController(AppDbContext context, ILogger<AuthController> logger, JwtTokenGenerator tokenGenerator) : ControllerBase
 {
     private readonly AppDbContext _context = context;
     private readonly ILogger<AuthController> _logger = logger;
     private readonly JwtTokenGenerator _tokenGenerator = tokenGenerator;
-    private readonly TokenBlacklistService _blacklistService = blacklistService;
 
     /// <summary>
     /// 用户登录
@@ -132,32 +131,11 @@ public class AuthController(AppDbContext context, ILogger<AuthController> logger
     [HttpPost("logout")]
     [ProducesResponseType(typeof(ApiResponse<object>), 200)]
     [ProducesResponseType(typeof(ApiResponse<object>), 401)]
-    public async Task<IActionResult> Logout()
+    public IActionResult Logout()
     {
         var userName = User.Identity?.Name;
-        var authHeader = Request.Headers.Authorization.ToString();
-        
-        if (!string.IsNullOrEmpty(authHeader) && authHeader.StartsWith("Bearer "))
-        {
-            var token = authHeader["Bearer ".Length..].Trim();
-            var expiresAtClaim = User.FindFirst("exp")?.Value;
-            
-            if (long.TryParse(expiresAtClaim, out var unixTime))
-            {
-                var expiresAt = UnixTimeStampToDateTime(unixTime);
-                await _blacklistService.AddToBlacklistAsync(token, expiresAt);
-            }
-        }
-        
         _logger.LogInformation("用户登出: {Name}", userName);
         var response = ApiResponse.Success<object>(null!, "登出成功");
         return Ok(response);
-    }
-    
-    private static DateTime UnixTimeStampToDateTime(long unixTimeStamp)
-    {
-        var dateTime = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
-        dateTime = dateTime.AddSeconds(unixTimeStamp).ToUniversalTime();
-        return dateTime;
     }
 }
