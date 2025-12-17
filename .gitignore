@@ -89,5 +89,3 @@ TestResults/
 # If your team has a different workflow (e.g., generating from a master DB), you might ignore them.
 # **/Migrations/*.cs
 
-
-.qoder
