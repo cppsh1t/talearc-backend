@@ -103,7 +103,7 @@ public class AuthController(AppDbContext context, ILogger<AuthController> logger
                 return BadRequest(ApiResponse.Fail(400, "用户名已存在"));
             }
             
-            var hashedPassword = _passwordHashService.HashPassword(registerForm.Password);
+            var hashedPassword = await _passwordHashService.HashPasswordAsync(registerForm.Password);
             var newUser = new User
             {
                 Name = registerForm.Name,
@@ -147,7 +147,7 @@ public class AuthController(AppDbContext context, ILogger<AuthController> logger
             var user = await _context.Users
                 .FirstOrDefaultAsync(u => u.Name == loginForm.Name);
             
-            if (user == null || !_passwordHashService.VerifyPassword(loginForm.Password, user.Password))
+            if (user == null || !await _passwordHashService.VerifyPasswordAsync(loginForm.Password, user.Password))
             {
                 _logger.LogWarning("登录失败: 用户名或密码错误 - {Name}", loginForm.Name);
                 var errorResponse = ApiResponse.Fail(401, "登录信息错误");

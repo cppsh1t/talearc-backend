@@ -88,3 +88,6 @@ TestResults/
 # Usually, you DO want to commit migrations, so these are commented out.
 # If your team has a different workflow (e.g., generating from a master DB), you might ignore them.
 # **/Migrations/*.cs
+
+
+.qoder

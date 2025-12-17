@@ -5,6 +5,9 @@ using System.Text;
 
 namespace talearc_backend.src.application.service;
 
+/// <summary>
+/// JWT Token 生成器，使用 Microsoft.IdentityModel.Tokens 标准库实现
+/// </summary>
 public class JwtTokenGenerator
 {
     private readonly string _secretKey;
@@ -16,6 +19,12 @@ public class JwtTokenGenerator
         _expirationMinutes = int.Parse(configuration["Jwt:ExpirationMinutes"] ?? "60");
     }
 
+    /// <summary>
+    /// 生成 JWT Token
+    /// </summary>
+    /// <param name="userId">用户 ID</param>
+    /// <param name="userName">用户名</param>
+    /// <returns>JWT Token 字符串</returns>
     public string GenerateToken(int userId, string userName)
     {
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_secretKey));
