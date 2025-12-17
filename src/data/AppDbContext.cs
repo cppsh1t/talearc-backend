@@ -13,6 +13,7 @@ public class AppDbContext : DbContext
     public DbSet<Misc> Miscs { get; set; }
     public DbSet<WorldEvent> WorldEvents { get; set; }
     public DbSet<WorldView> WorldViews { get; set; }
+    public DbSet<RegistrationKey> RegistrationKeys { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

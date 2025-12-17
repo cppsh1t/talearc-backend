@@ -5,6 +5,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
 using talearc_backend.src.data;
 using talearc_backend.src.data.dto;
+using talearc_backend.src.data.entities;
 using talearc_backend.src.data.extensions;
 using talearc_backend.src.structure;
 using talearc_backend.src.application.service;
@@ -19,7 +20,7 @@ public class LoginForm
     /// <summary>
     /// 用户名
     /// </summary>
-    /// <example>张三</example>
+    /// <example>john</example>
     [Required(ErrorMessage = "用户名是必填的")]
     public required string Name { get; set; }
     
@@ -32,15 +33,100 @@ public class LoginForm
 }
 
 /// <summary>
+/// 注册表单
+/// </summary>
+public class RegisterForm
+{
+    /// <summary>
+    /// 用户名
+    /// </summary>
+    /// <example>john</example>
+    [Required(ErrorMessage = "用户名是必填的")]
+    public required string Name { get; set; }
+    
+    /// <summary>
+    /// 密码
+    /// </summary>
+    /// <example>password123</example>
+    [Required(ErrorMessage = "密码是必填的")]
+    public required string Password { get; set; }
+    
+    /// <summary>
+    /// 注册密钥
+    /// </summary>
+    /// <example>REG-KEY-001</example>
+    [Required(ErrorMessage = "注册密钥是必填的")]
+    public required string RegistrationKey { get; set; }
+}
+
+/// <summary>
 /// 认证控制器
 /// </summary>
 [ApiController]
 [Route("talearc/api/[controller]")]
-public class AuthController(AppDbContext context, ILogger<AuthController> logger, JwtTokenGenerator tokenGenerator) : ControllerBase
+public class AuthController(AppDbContext context, ILogger<AuthController> logger, JwtTokenGenerator tokenGenerator, PasswordHashService passwordHashService, RegistrationKeyService registrationKeyService) : ControllerBase
 {
     private readonly AppDbContext _context = context;
     private readonly ILogger<AuthController> _logger = logger;
     private readonly JwtTokenGenerator _tokenGenerator = tokenGenerator;
+    private readonly PasswordHashService _passwordHashService = passwordHashService;
+    private readonly RegistrationKeyService _registrationKeyService = registrationKeyService;
+
+    /// <summary>
+    /// 用户注册
+    /// </summary>
+    /// <param name="registerForm">注册表单</param>
+    /// <returns>注册结果</returns>
+    /// <response code="200">注册成功</response>
+    /// <response code="400">注册失败（用户已存在或密钥无效）</response>
+    [HttpPost("register")]
+    [ProducesResponseType(typeof(ApiResponse<UserDto>), 200)]
+    [ProducesResponseType(typeof(ApiResponse<object>), 400)]
+    public async Task<IActionResult> Register([FromBody] RegisterForm registerForm)
+    {
+        _logger.LogInformation("用户注册尝试: {Name}", registerForm.Name);
+        
+        try
+        {
+            if (!await _registrationKeyService.IsKeyValidAsync(registerForm.RegistrationKey))
+            {
+                _logger.LogWarning("注册失败: 无效的注册密钥 - {Name}", registerForm.Name);
+                return BadRequest(ApiResponse.Fail(400, "无效的注册密钥"));
+            }
+            
+            var existingUser = await _context.Users
+                .FirstOrDefaultAsync(u => u.Name == registerForm.Name);
+            
+            if (existingUser != null)
+            {
+                _logger.LogWarning("注册失败: 用户已存在 - {Name}", registerForm.Name);
+                return BadRequest(ApiResponse.Fail(400, "用户名已存在"));
+            }
+            
+            var hashedPassword = _passwordHashService.HashPassword(registerForm.Password);
+            var newUser = new User
+            {
+                Name = registerForm.Name,
+                Password = hashedPassword,
+                CreateAt = DateTime.UtcNow
+            };
+            
+            _context.Users.Add(newUser);
+            await _context.SaveChangesAsync();
+            
+            await _registrationKeyService.MarkKeyAsUsedAsync(registerForm.RegistrationKey, newUser.Id);
+            
+            _logger.LogInformation("用户注册成功: {Name}", registerForm.Name);
+            var userDto = newUser.ToDto();
+            var response = ApiResponse.Success(userDto, "注册成功");
+            return Ok(response);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "注册过程中发生错误");
+            throw;
+        }
+    }
 
     /// <summary>
     /// 用户登录
@@ -59,9 +145,9 @@ public class AuthController(AppDbContext context, ILogger<AuthController> logger
         try
         {
             var user = await _context.Users
-                .FirstOrDefaultAsync(u => u.Name == loginForm.Name && u.Password == loginForm.Password);
+                .FirstOrDefaultAsync(u => u.Name == loginForm.Name);
             
-            if (user == null)
+            if (user == null || !_passwordHashService.VerifyPassword(loginForm.Password, user.Password))
             {
                 _logger.LogWarning("登录失败: 用户名或密码错误 - {Name}", loginForm.Name);
                 var errorResponse = ApiResponse.Fail(401, "登录信息错误");
