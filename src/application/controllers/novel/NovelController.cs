@@ -1,0 +1,136 @@
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
+using talearc_backend.src.data;
+using talearc_backend.src.data.entities;
+using talearc_backend.src.structure;
+using talearc_backend.src.application.service;
+
+namespace talearc_backend.src.application.controllers.novel;
+
+/// <summary>
+/// 小说控制器
+/// </summary>
+[ApiController]
+[Route("talearc/api/[controller]")]
+[Authorize]
+public class NovelController(AppDbContext context, ILogger<NovelController> logger, ChapterContentService contentService) : ControllerBase
+{
+    private readonly AppDbContext _context = context;
+    private readonly ILogger<NovelController> _logger = logger;
+    private readonly ChapterContentService _contentService = contentService;
+
+    private int GetUserId()
+    {
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        return int.TryParse(userIdClaim, out var userId) ? userId : 0;
+    }
+
+    /// <summary>
+    /// 获取小说列表
+    /// </summary>
+    [HttpGet]
+    public async Task<IActionResult> GetNovels([FromQuery] int? worldViewId)
+    {
+        var userId = GetUserId();
+        var query = _context.Novels.Where(n => n.UserId == userId);
+
+        if (worldViewId.HasValue)
+        {
+            query = query.Where(n => n.WorldViewId == worldViewId.Value);
+        }
+
+        var novels = await query.OrderByDescending(n => n.UpdatedAt).ToListAsync();
+        return Ok(ApiResponse.Success(novels));
+    }
+
+    /// <summary>
+    /// 获取小说详情
+    /// </summary>
+    [HttpGet("{id}")]
+    public async Task<IActionResult> GetNovel(int id)
+    {
+        var userId = GetUserId();
+        var novel = await _context.Novels.FirstOrDefaultAsync(n => n.Id == id && n.UserId == userId);
+
+        if (novel == null)
+        {
+            return NotFound(ApiResponse.Fail(404, "小说不存在"));
+        }
+
+        return Ok(ApiResponse.Success(novel));
+    }
+
+    /// <summary>
+    /// 创建小说
+    /// </summary>
+    [HttpPost]
+    public async Task<IActionResult> CreateNovel([FromBody] Novel novel)
+    {
+        var userId = GetUserId();
+        novel.UserId = userId;
+        novel.CreatedAt = DateTime.UtcNow;
+        novel.UpdatedAt = DateTime.UtcNow;
+
+        _context.Novels.Add(novel);
+        await _context.SaveChangesAsync();
+
+        _logger.LogInformation("小说已创建: {NovelId}", novel.Id);
+        return Ok(ApiResponse.Success(novel, "创建成功"));
+    }
+
+    /// <summary>
+    /// 更新小说
+    /// </summary>
+    [HttpPut("{id}")]
+    public async Task<IActionResult> UpdateNovel(int id, [FromBody] Novel updatedNovel)
+    {
+        var userId = GetUserId();
+        var novel = await _context.Novels.FirstOrDefaultAsync(n => n.Id == id && n.UserId == userId);
+
+        if (novel == null)
+        {
+            return NotFound(ApiResponse.Fail(404, "小说不存在"));
+        }
+
+        novel.Title = updatedNovel.Title;
+        novel.Description = updatedNovel.Description;
+        novel.WorldViewId = updatedNovel.WorldViewId;
+        novel.UpdatedAt = DateTime.UtcNow;
+
+        await _context.SaveChangesAsync();
+        _logger.LogInformation("小说已更新: {NovelId}", id);
+        return Ok(ApiResponse.Success(novel, "更新成功"));
+    }
+
+    /// <summary>
+    /// 删除小说
+    /// </summary>
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> DeleteNovel(int id)
+    {
+        var userId = GetUserId();
+        var novel = await _context.Novels.FirstOrDefaultAsync(n => n.Id == id && n.UserId == userId);
+
+        if (novel == null)
+        {
+            return NotFound(ApiResponse.Fail(404, "小说不存在"));
+        }
+
+        // 删除所有章节及其内容文件
+        var chapters = await _context.Chapters.Where(c => c.NovelId == id).ToListAsync();
+        foreach (var chapter in chapters)
+        {
+            _contentService.DeleteChapterContent(userId, novel.WorldViewId, id, chapter.Uuid);
+        }
+        _context.Chapters.RemoveRange(chapters);
+
+        _context.Novels.Remove(novel);
+        await _context.SaveChangesAsync();
+
+        _logger.LogInformation("小说已删除: {NovelId}", id);
+        return Ok(ApiResponse.Success<object>(null!, "删除成功"));
+    }
+}
+

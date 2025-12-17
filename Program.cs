@@ -46,6 +46,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 builder.Services.AddScoped<JwtTokenGenerator>();
 builder.Services.AddScoped<PasswordHashService>();
 builder.Services.AddScoped<RegistrationKeyService>();
+builder.Services.AddScoped<ChapterContentService>();
 
 builder.Services.AddControllers(options =>
 {

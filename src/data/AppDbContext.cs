@@ -14,6 +14,8 @@ public class AppDbContext : DbContext
     public DbSet<WorldEvent> WorldEvents { get; set; }
     public DbSet<WorldView> WorldViews { get; set; }
     public DbSet<RegistrationKey> RegistrationKeys { get; set; }
+    public DbSet<Novel> Novels { get; set; }
+    public DbSet<Chapter> Chapters { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
