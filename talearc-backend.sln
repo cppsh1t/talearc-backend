@@ -5,6 +5,8 @@ VisualStudioVersion = 17.5.002.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "talearc-backend", "talearc-backend.csproj", "{E9CCCEC2-892A-40E1-B279-A2FBE29D8B22}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "talearc-backend.Tests", "tests\talearc-backend.Tests.csproj", "{D3F10F70-3F4E-4DF2-B8F2-30B2885443C4}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +17,10 @@ Global
 		{E9CCCEC2-892A-40E1-B279-A2FBE29D8B22}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E9CCCEC2-892A-40E1-B279-A2FBE29D8B22}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E9CCCEC2-892A-40E1-B279-A2FBE29D8B22}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D3F10F70-3F4E-4DF2-B8F2-30B2885443C4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D3F10F70-3F4E-4DF2-B8F2-30B2885443C4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D3F10F70-3F4E-4DF2-B8F2-30B2885443C4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D3F10F70-3F4E-4DF2-B8F2-30B2885443C4}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
