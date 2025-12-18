@@ -1,10 +1,9 @@
 namespace talearc_backend.src.structure;
 
 /// <summary>
-/// 分页请求参数
+/// 分页请求基类
 /// </summary>
-/// <typeparam name="T">查询参数类型</typeparam>
-public class PagedRequest<T>
+public class PagedRequest
 {
     /// <summary>
     /// 页码（从1开始）
@@ -15,9 +14,4 @@ public class PagedRequest<T>
     /// 每页大小
     /// </summary>
     public int Size { get; set; } = 10;
-
-    /// <summary>
-    /// 查询参数
-    /// </summary>
-    public T? Query { get; set; }
 }

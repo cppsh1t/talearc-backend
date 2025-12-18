@@ -31,7 +31,13 @@ public class ChapterController(AppDbContext context, ILogger<ChapterController> 
     /// <summary>
     /// 获取章节列表
     /// </summary>
+    /// <param name="novelId">小说ID</param>
+    /// <returns>章节列表</returns>
+    /// <response code="200">返回章节列表</response>
+    /// <response code="404">小说不存在</response>
     [HttpGet]
+    [ProducesResponseType(typeof(ApiResponse<List<ChapterResponse>>), 200)]
+    [ProducesResponseType(typeof(ApiResponse<object>), 404)]
     public async Task<IActionResult> GetChapters(int novelId)
     {
         var userId = GetUserId();
@@ -67,7 +73,14 @@ public class ChapterController(AppDbContext context, ILogger<ChapterController> 
     /// <summary>
     /// 获取章节详情（含内容）
     /// </summary>
+    /// <param name="novelId">小说ID</param>
+    /// <param name="id">章节ID</param>
+    /// <returns>章节详情及内容</returns>
+    /// <response code="200">返回章节详情</response>
+    /// <response code="404">小说或章节不存在</response>
     [HttpGet("{id}")]
+    [ProducesResponseType(typeof(ApiResponse<ChapterResponse>), 200)]
+    [ProducesResponseType(typeof(ApiResponse<object>), 404)]
     public async Task<IActionResult> GetChapter(int novelId, int id)
     {
         var userId = GetUserId();
@@ -109,7 +122,14 @@ public class ChapterController(AppDbContext context, ILogger<ChapterController> 
     /// <summary>
     /// 创建章节
     /// </summary>
+    /// <param name="novelId">小说ID</param>
+    /// <param name="request">章节信息</param>
+    /// <returns>创建的章节</returns>
+    /// <response code="200">创建成功</response>
+    /// <response code="404">小说不存在</response>
     [HttpPost]
+    [ProducesResponseType(typeof(ApiResponse<Chapter>), 200)]
+    [ProducesResponseType(typeof(ApiResponse<object>), 404)]
     public async Task<IActionResult> CreateChapter(int novelId, [FromBody] ChapterRequest request)
     {
         var userId = GetUserId();
@@ -147,7 +167,15 @@ public class ChapterController(AppDbContext context, ILogger<ChapterController> 
     /// <summary>
     /// 更新章节
     /// </summary>
+    /// <param name="novelId">小说ID</param>
+    /// <param name="id">章节ID</param>
+    /// <param name="request">更新的章节信息</param>
+    /// <returns>更新后的章节</returns>
+    /// <response code="200">更新成功</response>
+    /// <response code="404">小说或章节不存在</response>
     [HttpPut("{id}")]
+    [ProducesResponseType(typeof(ApiResponse<Chapter>), 200)]
+    [ProducesResponseType(typeof(ApiResponse<object>), 404)]
     public async Task<IActionResult> UpdateChapter(int novelId, int id, [FromBody] ChapterRequest request)
     {
         var userId = GetUserId();
@@ -185,7 +213,14 @@ public class ChapterController(AppDbContext context, ILogger<ChapterController> 
     /// <summary>
     /// 删除章节
     /// </summary>
+    /// <param name="novelId">小说ID</param>
+    /// <param name="id">章节ID</param>
+    /// <returns>删除结果</returns>
+    /// <response code="200">删除成功</response>
+    /// <response code="404">小说或章节不存在</response>
     [HttpDelete("{id}")]
+    [ProducesResponseType(typeof(ApiResponse<object>), 200)]
+    [ProducesResponseType(typeof(ApiResponse<object>), 404)]
     public async Task<IActionResult> DeleteChapter(int novelId, int id)
     {
         var userId = GetUserId();

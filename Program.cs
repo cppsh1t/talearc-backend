@@ -62,7 +62,11 @@ builder.Services.AddSwaggerGen(c =>
     c.SwaggerDoc("v1", new() { Title = "TaleArc Backend API", Version = "v1" });
     var xmlFile = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";
     var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
-    c.IncludeXmlComments(xmlPath);
+    c.IncludeXmlComments(xmlPath, includeControllerXmlComments: true);
+    
+    // 配置 Schema 使用小驼峰命名
+    c.SchemaFilter<CamelCaseSchemaFilter>();
+    c.DescribeAllParametersInCamelCase();
     
     c.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
     {

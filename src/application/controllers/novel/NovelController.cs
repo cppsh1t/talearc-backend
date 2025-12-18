@@ -30,7 +30,11 @@ public class NovelController(AppDbContext context, ILogger<NovelController> logg
     /// <summary>
     /// 获取小说列表
     /// </summary>
+    /// <param name="worldViewId">世界观ID（可选）</param>
+    /// <returns>小说列表</returns>
+    /// <response code="200">返回小说列表</response>
     [HttpGet]
+    [ProducesResponseType(typeof(ApiResponse<List<Novel>>), 200)]
     public async Task<IActionResult> GetNovels([FromQuery] int? worldViewId)
     {
         var userId = GetUserId();
@@ -48,7 +52,13 @@ public class NovelController(AppDbContext context, ILogger<NovelController> logg
     /// <summary>
     /// 获取小说详情
     /// </summary>
+    /// <param name="id">小说ID</param>
+    /// <returns>小说详情</returns>
+    /// <response code="200">返回小说详情</response>
+    /// <response code="404">小说不存在</response>
     [HttpGet("{id}")]
+    [ProducesResponseType(typeof(ApiResponse<Novel>), 200)]
+    [ProducesResponseType(typeof(ApiResponse<object>), 404)]
     public async Task<IActionResult> GetNovel(int id)
     {
         var userId = GetUserId();
@@ -65,7 +75,11 @@ public class NovelController(AppDbContext context, ILogger<NovelController> logg
     /// <summary>
     /// 创建小说
     /// </summary>
+    /// <param name="novel">小说信息</param>
+    /// <returns>创建的小说</returns>
+    /// <response code="200">创建成功</response>
     [HttpPost]
+    [ProducesResponseType(typeof(ApiResponse<Novel>), 200)]
     public async Task<IActionResult> CreateNovel([FromBody] Novel novel)
     {
         var userId = GetUserId();
@@ -83,7 +97,14 @@ public class NovelController(AppDbContext context, ILogger<NovelController> logg
     /// <summary>
     /// 更新小说
     /// </summary>
+    /// <param name="id">小说ID</param>
+    /// <param name="updatedNovel">更新的小说信息</param>
+    /// <returns>更新后的小说</returns>
+    /// <response code="200">更新成功</response>
+    /// <response code="404">小说不存在</response>
     [HttpPut("{id}")]
+    [ProducesResponseType(typeof(ApiResponse<Novel>), 200)]
+    [ProducesResponseType(typeof(ApiResponse<object>), 404)]
     public async Task<IActionResult> UpdateNovel(int id, [FromBody] Novel updatedNovel)
     {
         var userId = GetUserId();
@@ -107,7 +128,13 @@ public class NovelController(AppDbContext context, ILogger<NovelController> logg
     /// <summary>
     /// 删除小说
     /// </summary>
+    /// <param name="id">小说ID</param>
+    /// <returns>删除结果</returns>
+    /// <response code="200">删除成功</response>
+    /// <response code="404">小说不存在</response>
     [HttpDelete("{id}")]
+    [ProducesResponseType(typeof(ApiResponse<object>), 200)]
+    [ProducesResponseType(typeof(ApiResponse<object>), 404)]
     public async Task<IActionResult> DeleteNovel(int id)
     {
         var userId = GetUserId();

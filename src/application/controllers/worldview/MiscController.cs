@@ -29,16 +29,20 @@ public class MiscController : ControllerBase
     /// <summary>
     /// 获取用户的杂项（分页）
     /// </summary>
+    /// <param name="request">分页请求（包含 page, size, worldViewId）</param>
+    /// <returns>分页的杂项列表</returns>
+    /// <response code="200">返回杂项列表</response>
     [HttpGet]
-    public async Task<IActionResult> GetMiscs([FromQuery] PagedRequest<MiscQueryParams> request)
+    [ProducesResponseType(typeof(ApiResponse<PagedResult<MiscResponse>>), 200)]
+    public async Task<IActionResult> GetMiscs([FromQuery] MiscPagedRequest request)
     {
         var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
 
         var query = _context.Miscs.Where(m => m.UserId == userId);
         
-        if (request.Query?.WorldViewId != null)
+        if (request.WorldViewId.HasValue)
         {
-            query = query.Where(m => m.WorldViewId == request.Query.WorldViewId.Value);
+            query = query.Where(m => m.WorldViewId == request.WorldViewId.Value);
         }
 
         var total = await query.CountAsync();
@@ -71,7 +75,13 @@ public class MiscController : ControllerBase
     /// <summary>
     /// 根据ID获取杂项
     /// </summary>
+    /// <param name="id">杂项ID</param>
+    /// <returns>杂项详情</returns>
+    /// <response code="200">返回杂项详情</response>
+    /// <response code="404">杂项不存在</response>
     [HttpGet("{id}")]
+    [ProducesResponseType(typeof(ApiResponse<MiscResponse>), 200)]
+    [ProducesResponseType(typeof(ApiResponse<object>), 404)]
     public async Task<IActionResult> GetMisc(int id)
     {
         var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
@@ -102,7 +112,13 @@ public class MiscController : ControllerBase
     /// <summary>
     /// 创建杂项
     /// </summary>
+    /// <param name="request">创建杂项请求</param>
+    /// <returns>创建的杂项信息</returns>
+    /// <response code="201">创建成功</response>
+    /// <response code="400">世界观不存在或无权访问</response>
     [HttpPost]
+    [ProducesResponseType(typeof(ApiResponse<MiscResponse>), 201)]
+    [ProducesResponseType(typeof(ApiResponse<object>), 400)]
     public async Task<IActionResult> CreateMisc([FromBody] CreateMiscRequest request)
     {
         var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
@@ -148,7 +164,14 @@ public class MiscController : ControllerBase
     /// <summary>
     /// 更新杂项
     /// </summary>
+    /// <param name="id">杂项ID</param>
+    /// <param name="request">更新杂项请求</param>
+    /// <returns>更新后的杂项信息</returns>
+    /// <response code="200">更新成功</response>
+    /// <response code="404">杂项不存在</response>
     [HttpPut("{id}")]
+    [ProducesResponseType(typeof(ApiResponse<MiscResponse>), 200)]
+    [ProducesResponseType(typeof(ApiResponse<object>), 404)]
     public async Task<IActionResult> UpdateMisc(int id, [FromBody] UpdateMiscRequest request)
     {
         var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
@@ -198,7 +221,13 @@ public class MiscController : ControllerBase
     /// <summary>
     /// 删除杂项
     /// </summary>
+    /// <param name="id">杂项ID</param>
+    /// <returns>删除结果</returns>
+    /// <response code="200">删除成功</response>
+    /// <response code="404">杂项不存在</response>
     [HttpDelete("{id}")]
+    [ProducesResponseType(typeof(ApiResponse<object>), 200)]
+    [ProducesResponseType(typeof(ApiResponse<object>), 404)]
     public async Task<IActionResult> DeleteMisc(int id)
     {
         var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
@@ -216,9 +245,4 @@ public class MiscController : ControllerBase
 
         return Ok(ApiResponse.Success<object?>(null, "删除成功"));
     }
-}
-
-public class MiscQueryParams
-{
-    public int? WorldViewId { get; set; }
 }

@@ -16,7 +16,7 @@ public static class QueryableExtensions
     /// <summary>
     /// 分页查询（使用 PagedRequest）
     /// </summary>
-    public static IQueryable<T> Page<T, TQuery>(this IQueryable<T> query, PagedRequest<TQuery> request)
+    public static IQueryable<T> Page<T>(this IQueryable<T> query, PagedRequest request)
     {
         return query.Skip((request.Page - 1) * request.Size).Take(request.Size);
     }
