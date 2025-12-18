@@ -96,7 +96,7 @@
 - [ ] 完善 CharacterSnapshot 实体与 CRUD API
 - [ ] 完善 WorldEvent 实体与 CRUD API
 - [ ] 完善 Misc 实体与 CRUD API
-- [ ] 添加 Novel 实体与 CRUD API
+- [x] 添加 Novel 实体与 CRUD API
 - [ ] 文章引用关系设计（引用角色/事件/杂项）
 - [ ] 实体间关联关系验证
 - [ ] 数据迁移脚本
