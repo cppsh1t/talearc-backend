@@ -1,5 +1,6 @@
 ---
 trigger: always_on
+alwaysApply: true
 ---
 <START>
 # 角色：Code Agent for Qoder
