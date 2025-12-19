@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.Security.Claims;
+using talearc_backend.src.application.controllers.common;
 using talearc_backend.src.data;
 using talearc_backend.src.data.dto;
 using talearc_backend.src.data.entities;
@@ -15,15 +15,11 @@ namespace talearc_backend.src.application.controllers.worldview;
 [Authorize]
 [ApiController]
 [Route("talearc/api/[controller]")]
-public class MiscController : ControllerBase
+public class MiscController : AuthenticatedControllerBase
 {
-    private readonly AppDbContext _context;
-    private readonly ILogger<MiscController> _logger;
-
     public MiscController(AppDbContext context, ILogger<MiscController> logger)
+        : base(context, logger)
     {
-        _context = context;
-        _logger = logger;
     }
 
     /// <summary>
@@ -36,9 +32,7 @@ public class MiscController : ControllerBase
     [ProducesResponseType(typeof(ApiResponse<PagedResult<MiscResponse>>), 200)]
     public async Task<IActionResult> GetMiscs([FromQuery] MiscPagedRequest request)
     {
-        var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
-
-        var query = _context.Miscs.Where(m => m.UserId == userId);
+        var query = Context.Miscs.Where(m => m.UserId == CurrentUserId);
         
         if (request.WorldViewId.HasValue)
         {
@@ -84,10 +78,8 @@ public class MiscController : ControllerBase
     [ProducesResponseType(typeof(ApiResponse<object>), 404)]
     public async Task<IActionResult> GetMisc(int id)
     {
-        var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
-
-        var misc = await _context.Miscs
-            .Where(m => m.Id == id && m.UserId == userId)
+        var misc = await Context.Miscs
+            .Where(m => m.Id == id && m.UserId == CurrentUserId)
             .Select(m => new MiscResponse
             {
                 Id = m.Id,
@@ -121,11 +113,9 @@ public class MiscController : ControllerBase
     [ProducesResponseType(typeof(ApiResponse<object>), 400)]
     public async Task<IActionResult> CreateMisc([FromBody] CreateMiscRequest request)
     {
-        var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
-
         // 验证世界观是否属于当前用户
-        var worldViewExists = await _context.WorldViews
-            .AnyAsync(w => w.Id == request.WorldViewId && w.UserId == userId);
+        var worldViewExists = await Context.WorldViews
+            .AnyAsync(w => w.Id == request.WorldViewId && w.UserId == CurrentUserId);
 
         if (!worldViewExists)
         {
@@ -134,7 +124,7 @@ public class MiscController : ControllerBase
 
         var misc = new Misc
         {
-            UserId = userId,
+            UserId = CurrentUserId,
             WorldViewId = request.WorldViewId,
             Name = request.Name,
             Description = request.Description,
@@ -143,8 +133,8 @@ public class MiscController : ControllerBase
             UpdatedAt = DateTime.UtcNow
         };
 
-        _context.Miscs.Add(misc);
-        await _context.SaveChangesAsync();
+        Context.Miscs.Add(misc);
+        await Context.SaveChangesAsync();
 
         var response = new MiscResponse
         {
@@ -174,10 +164,8 @@ public class MiscController : ControllerBase
     [ProducesResponseType(typeof(ApiResponse<object>), 404)]
     public async Task<IActionResult> UpdateMisc(int id, [FromBody] UpdateMiscRequest request)
     {
-        var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
-
-        var misc = await _context.Miscs
-            .FirstOrDefaultAsync(m => m.Id == id && m.UserId == userId);
+        var misc = await Context.Miscs
+            .FirstOrDefaultAsync(m => m.Id == id && m.UserId == CurrentUserId);
 
         if (misc == null)
         {
@@ -201,7 +189,7 @@ public class MiscController : ControllerBase
 
         misc.UpdatedAt = DateTime.UtcNow;
 
-        await _context.SaveChangesAsync();
+        await Context.SaveChangesAsync();
 
         var response = new MiscResponse
         {
@@ -230,18 +218,16 @@ public class MiscController : ControllerBase
     [ProducesResponseType(typeof(ApiResponse<object>), 404)]
     public async Task<IActionResult> DeleteMisc(int id)
     {
-        var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
-
-        var misc = await _context.Miscs
-            .FirstOrDefaultAsync(m => m.Id == id && m.UserId == userId);
+        var misc = await Context.Miscs
+            .FirstOrDefaultAsync(m => m.Id == id && m.UserId == CurrentUserId);
 
         if (misc == null)
         {
             return NotFound(ApiResponse.Fail(404, "杂项不存在"));
         }
 
-        _context.Miscs.Remove(misc);
-        await _context.SaveChangesAsync();
+        Context.Miscs.Remove(misc);
+        await Context.SaveChangesAsync();
 
         return Ok(ApiResponse.Success<object?>(null, "删除成功"));
     }

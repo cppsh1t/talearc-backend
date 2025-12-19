@@ -1,11 +1,11 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.Security.Claims;
+using talearc_backend.src.application.controllers.common;
+using talearc_backend.src.application.service;
 using talearc_backend.src.data;
 using talearc_backend.src.data.entities;
 using talearc_backend.src.structure;
-using talearc_backend.src.application.service;
 
 namespace talearc_backend.src.application.controllers.novel;
 
@@ -15,17 +15,9 @@ namespace talearc_backend.src.application.controllers.novel;
 [ApiController]
 [Route("talearc/api/[controller]")]
 [Authorize]
-public class NovelController(AppDbContext context, ILogger<NovelController> logger, ChapterContentService contentService) : ControllerBase
+public class NovelController(AppDbContext context, ILogger<NovelController> logger, ChapterContentService contentService) : AuthenticatedControllerBase(context, logger)
 {
-    private readonly AppDbContext _context = context;
-    private readonly ILogger<NovelController> _logger = logger;
     private readonly ChapterContentService _contentService = contentService;
-
-    private int GetUserId()
-    {
-        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        return int.TryParse(userIdClaim, out var userId) ? userId : 0;
-    }
 
     /// <summary>
     /// 获取小说列表
@@ -37,8 +29,7 @@ public class NovelController(AppDbContext context, ILogger<NovelController> logg
     [ProducesResponseType(typeof(ApiResponse<List<Novel>>), 200)]
     public async Task<IActionResult> GetNovels([FromQuery] int? worldViewId)
     {
-        var userId = GetUserId();
-        var query = _context.Novels.Where(n => n.UserId == userId);
+        var query = Context.Novels.Where(n => n.UserId == CurrentUserId);
 
         if (worldViewId.HasValue)
         {
@@ -61,8 +52,7 @@ public class NovelController(AppDbContext context, ILogger<NovelController> logg
     [ProducesResponseType(typeof(ApiResponse<object>), 404)]
     public async Task<IActionResult> GetNovel(int id)
     {
-        var userId = GetUserId();
-        var novel = await _context.Novels.FirstOrDefaultAsync(n => n.Id == id && n.UserId == userId);
+        var novel = await Context.Novels.FirstOrDefaultAsync(n => n.Id == id && n.UserId == CurrentUserId);
 
         if (novel == null)
         {
@@ -82,15 +72,14 @@ public class NovelController(AppDbContext context, ILogger<NovelController> logg
     [ProducesResponseType(typeof(ApiResponse<Novel>), 200)]
     public async Task<IActionResult> CreateNovel([FromBody] Novel novel)
     {
-        var userId = GetUserId();
-        novel.UserId = userId;
+        novel.UserId = CurrentUserId;
         novel.CreatedAt = DateTime.UtcNow;
         novel.UpdatedAt = DateTime.UtcNow;
 
-        _context.Novels.Add(novel);
-        await _context.SaveChangesAsync();
+        Context.Novels.Add(novel);
+        await Context.SaveChangesAsync();
 
-        _logger.LogInformation("小说已创建: {NovelId}", novel.Id);
+        Logger.LogInformation("小说已创建: {NovelId}", novel.Id);
         return Ok(ApiResponse.Success(novel, "创建成功"));
     }
 
@@ -107,8 +96,7 @@ public class NovelController(AppDbContext context, ILogger<NovelController> logg
     [ProducesResponseType(typeof(ApiResponse<object>), 404)]
     public async Task<IActionResult> UpdateNovel(int id, [FromBody] Novel updatedNovel)
     {
-        var userId = GetUserId();
-        var novel = await _context.Novels.FirstOrDefaultAsync(n => n.Id == id && n.UserId == userId);
+        var novel = await Context.Novels.FirstOrDefaultAsync(n => n.Id == id && n.UserId == CurrentUserId);
 
         if (novel == null)
         {
@@ -120,8 +108,8 @@ public class NovelController(AppDbContext context, ILogger<NovelController> logg
         novel.WorldViewId = updatedNovel.WorldViewId;
         novel.UpdatedAt = DateTime.UtcNow;
 
-        await _context.SaveChangesAsync();
-        _logger.LogInformation("小说已更新: {NovelId}", id);
+        await Context.SaveChangesAsync();
+        Logger.LogInformation("小说已更新: {NovelId}", id);
         return Ok(ApiResponse.Success(novel, "更新成功"));
     }
 
@@ -137,8 +125,7 @@ public class NovelController(AppDbContext context, ILogger<NovelController> logg
     [ProducesResponseType(typeof(ApiResponse<object>), 404)]
     public async Task<IActionResult> DeleteNovel(int id)
     {
-        var userId = GetUserId();
-        var novel = await _context.Novels.FirstOrDefaultAsync(n => n.Id == id && n.UserId == userId);
+        var novel = await Context.Novels.FirstOrDefaultAsync(n => n.Id == id && n.UserId == CurrentUserId);
 
         if (novel == null)
         {
@@ -146,17 +133,17 @@ public class NovelController(AppDbContext context, ILogger<NovelController> logg
         }
 
         // 删除所有章节及其内容文件
-        var chapters = await _context.Chapters.Where(c => c.NovelId == id).ToListAsync();
+        var chapters = await Context.Chapters.Where(c => c.NovelId == id).ToListAsync();
         foreach (var chapter in chapters)
         {
-            _contentService.DeleteChapterContent(userId, novel.WorldViewId, id, chapter.Uuid);
+            _contentService.DeleteChapterContent(CurrentUserId, novel.WorldViewId, id, chapter.Uuid);
         }
-        _context.Chapters.RemoveRange(chapters);
+        Context.Chapters.RemoveRange(chapters);
 
-        _context.Novels.Remove(novel);
-        await _context.SaveChangesAsync();
+        Context.Novels.Remove(novel);
+        await Context.SaveChangesAsync();
 
-        _logger.LogInformation("小说已删除: {NovelId}", id);
+        Logger.LogInformation("小说已删除: {NovelId}", id);
         return Ok(ApiResponse.Success<object>(null!, "删除成功"));
     }
 }

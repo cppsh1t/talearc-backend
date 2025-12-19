@@ -1,12 +1,12 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.Security.Claims;
-using talearc_backend.src.data;
-using talearc_backend.src.data.entities;
-using talearc_backend.src.data.dto;
-using talearc_backend.src.structure;
+using talearc_backend.src.application.controllers.common;
 using talearc_backend.src.application.service;
+using talearc_backend.src.data;
+using talearc_backend.src.data.dto;
+using talearc_backend.src.data.entities;
+using talearc_backend.src.structure;
 
 namespace talearc_backend.src.application.controllers.novel;
 
@@ -16,17 +16,9 @@ namespace talearc_backend.src.application.controllers.novel;
 [ApiController]
 [Route("talearc/api/novels/{novelId}/[controller]")]
 [Authorize]
-public class ChapterController(AppDbContext context, ILogger<ChapterController> logger, ChapterContentService contentService) : ControllerBase
+public class ChapterController(AppDbContext context, ILogger<ChapterController> logger, ChapterContentService contentService) : AuthenticatedControllerBase(context, logger)
 {
-    private readonly AppDbContext _context = context;
-    private readonly ILogger<ChapterController> _logger = logger;
     private readonly ChapterContentService _contentService = contentService;
-
-    private int GetUserId()
-    {
-        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        return int.TryParse(userIdClaim, out var userId) ? userId : 0;
-    }
 
     /// <summary>
     /// 获取章节列表
@@ -40,15 +32,14 @@ public class ChapterController(AppDbContext context, ILogger<ChapterController> 
     [ProducesResponseType(typeof(ApiResponse<object>), 404)]
     public async Task<IActionResult> GetChapters(int novelId)
     {
-        var userId = GetUserId();
-        var novel = await _context.Novels.FirstOrDefaultAsync(n => n.Id == novelId && n.UserId == userId);
+        var novel = await Context.Novels.FirstOrDefaultAsync(n => n.Id == novelId && n.UserId == CurrentUserId);
 
         if (novel == null)
         {
             return NotFound(ApiResponse.Fail(404, "小说不存在"));
         }
 
-        var chapters = await _context.Chapters
+        var chapters = await Context.Chapters
             .Where(c => c.NovelId == novelId)
             .OrderBy(c => c.Order)
             .Select(c => new ChapterResponse
@@ -83,22 +74,21 @@ public class ChapterController(AppDbContext context, ILogger<ChapterController> 
     [ProducesResponseType(typeof(ApiResponse<object>), 404)]
     public async Task<IActionResult> GetChapter(int novelId, int id)
     {
-        var userId = GetUserId();
-        var novel = await _context.Novels.FirstOrDefaultAsync(n => n.Id == novelId && n.UserId == userId);
+        var novel = await Context.Novels.FirstOrDefaultAsync(n => n.Id == novelId && n.UserId == CurrentUserId);
 
         if (novel == null)
         {
             return NotFound(ApiResponse.Fail(404, "小说不存在"));
         }
 
-        var chapter = await _context.Chapters.FirstOrDefaultAsync(c => c.Id == id && c.NovelId == novelId);
+        var chapter = await Context.Chapters.FirstOrDefaultAsync(c => c.Id == id && c.NovelId == novelId);
 
         if (chapter == null)
         {
             return NotFound(ApiResponse.Fail(404, "章节不存在"));
         }
 
-        var content = await _contentService.ReadChapterContentAsync(userId, novel.WorldViewId, novelId, chapter.Uuid);
+        var content = await _contentService.ReadChapterContentAsync(CurrentUserId, novel.WorldViewId, novelId, chapter.Uuid);
 
         var response = new ChapterResponse
         {
@@ -132,8 +122,7 @@ public class ChapterController(AppDbContext context, ILogger<ChapterController> 
     [ProducesResponseType(typeof(ApiResponse<object>), 404)]
     public async Task<IActionResult> CreateChapter(int novelId, [FromBody] ChapterRequest request)
     {
-        var userId = GetUserId();
-        var novel = await _context.Novels.FirstOrDefaultAsync(n => n.Id == novelId && n.UserId == userId);
+        var novel = await Context.Novels.FirstOrDefaultAsync(n => n.Id == novelId && n.UserId == CurrentUserId);
 
         if (novel == null)
         {
@@ -154,13 +143,13 @@ public class ChapterController(AppDbContext context, ILogger<ChapterController> 
             UpdatedAt = DateTime.UtcNow
         };
 
-        _context.Chapters.Add(chapter);
-        await _context.SaveChangesAsync();
+        Context.Chapters.Add(chapter);
+        await Context.SaveChangesAsync();
 
         // 保存章节内容到文件
-        await _contentService.WriteChapterContentAsync(userId, novel.WorldViewId, novelId, chapter.Uuid, request.Content);
+        await _contentService.WriteChapterContentAsync(CurrentUserId, novel.WorldViewId, novelId, chapter.Uuid, request.Content);
 
-        _logger.LogInformation("章节已创建: {ChapterId}", chapter.Id);
+        Logger.LogInformation("章节已创建: {ChapterId}", chapter.Id);
         return Ok(ApiResponse.Success(chapter, "创建成功"));
     }
 
@@ -178,15 +167,14 @@ public class ChapterController(AppDbContext context, ILogger<ChapterController> 
     [ProducesResponseType(typeof(ApiResponse<object>), 404)]
     public async Task<IActionResult> UpdateChapter(int novelId, int id, [FromBody] ChapterRequest request)
     {
-        var userId = GetUserId();
-        var novel = await _context.Novels.FirstOrDefaultAsync(n => n.Id == novelId && n.UserId == userId);
+        var novel = await Context.Novels.FirstOrDefaultAsync(n => n.Id == novelId && n.UserId == CurrentUserId);
 
         if (novel == null)
         {
             return NotFound(ApiResponse.Fail(404, "小说不存在"));
         }
 
-        var chapter = await _context.Chapters.FirstOrDefaultAsync(c => c.Id == id && c.NovelId == novelId);
+        var chapter = await Context.Chapters.FirstOrDefaultAsync(c => c.Id == id && c.NovelId == novelId);
 
         if (chapter == null)
         {
@@ -201,12 +189,12 @@ public class ChapterController(AppDbContext context, ILogger<ChapterController> 
         chapter.ReferencedMiscIds = request.ReferencedMiscIds;
         chapter.UpdatedAt = DateTime.UtcNow;
 
-        await _context.SaveChangesAsync();
+        await Context.SaveChangesAsync();
 
         // 更新章节内容文件
-        await _contentService.WriteChapterContentAsync(userId, novel.WorldViewId, novelId, chapter.Uuid, request.Content);
+        await _contentService.WriteChapterContentAsync(CurrentUserId, novel.WorldViewId, novelId, chapter.Uuid, request.Content);
 
-        _logger.LogInformation("章节已更新: {ChapterId}", id);
+        Logger.LogInformation("章节已更新: {ChapterId}", id);
         return Ok(ApiResponse.Success(chapter, "更新成功"));
     }
 
@@ -223,15 +211,14 @@ public class ChapterController(AppDbContext context, ILogger<ChapterController> 
     [ProducesResponseType(typeof(ApiResponse<object>), 404)]
     public async Task<IActionResult> DeleteChapter(int novelId, int id)
     {
-        var userId = GetUserId();
-        var novel = await _context.Novels.FirstOrDefaultAsync(n => n.Id == novelId && n.UserId == userId);
+        var novel = await Context.Novels.FirstOrDefaultAsync(n => n.Id == novelId && n.UserId == CurrentUserId);
 
         if (novel == null)
         {
             return NotFound(ApiResponse.Fail(404, "小说不存在"));
         }
 
-        var chapter = await _context.Chapters.FirstOrDefaultAsync(c => c.Id == id && c.NovelId == novelId);
+        var chapter = await Context.Chapters.FirstOrDefaultAsync(c => c.Id == id && c.NovelId == novelId);
 
         if (chapter == null)
         {
@@ -239,12 +226,12 @@ public class ChapterController(AppDbContext context, ILogger<ChapterController> 
         }
 
         // 删除章节内容文件
-        _contentService.DeleteChapterContent(userId, novel.WorldViewId, novelId, chapter.Uuid);
+        _contentService.DeleteChapterContent(CurrentUserId, novel.WorldViewId, novelId, chapter.Uuid);
 
-        _context.Chapters.Remove(chapter);
-        await _context.SaveChangesAsync();
+        Context.Chapters.Remove(chapter);
+        await Context.SaveChangesAsync();
 
-        _logger.LogInformation("章节已删除: {ChapterId}", id);
+        Logger.LogInformation("章节已删除: {ChapterId}", id);
         return Ok(ApiResponse.Success<object>(null!, "删除成功"));
     }
 }

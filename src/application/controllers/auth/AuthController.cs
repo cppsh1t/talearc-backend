@@ -186,9 +186,8 @@ public class AuthController(AppDbContext context, ILogger<AuthController> logger
     [ProducesResponseType(typeof(ApiResponse<object>), 401)]
     public async Task<IActionResult> GetUserInfo()
     {
-        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        
-        if (!int.TryParse(userIdClaim, out var userId))
+        var userId = GetCurrentUserId();
+        if (userId == 0)
         {
             _logger.LogWarning("无效的用户ID");
             return Unauthorized(ApiResponse.Fail(401, "无效的用户信息"));
@@ -205,6 +204,12 @@ public class AuthController(AppDbContext context, ILogger<AuthController> logger
         _logger.LogInformation("获取用户信息: {Name}", user.Name);
         var response = ApiResponse.Success(userDto, "获取成功");
         return Ok(response);
+    }
+    
+    private int GetCurrentUserId()
+    {
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        return int.TryParse(userIdClaim, out var userId) ? userId : 0;
     }
     
     /// <summary>
