@@ -9,16 +9,10 @@ namespace talearc_backend.src.application.controllers.common
     /// <summary>
     /// 需要身份验证的控制器基类，提供自动解析当前用户信息的功能
     /// </summary>
-    public abstract class AuthenticatedControllerBase : ControllerBase
+    public abstract class AuthenticatedControllerBase(AppDbContext context, ILogger logger) : ControllerBase
     {
-        protected readonly AppDbContext Context;
-        protected readonly ILogger Logger;
-
-        protected AuthenticatedControllerBase(AppDbContext context, ILogger logger)
-        {
-            Context = context;
-            Logger = logger;
-        }
+        protected readonly AppDbContext Context = context;
+        protected readonly ILogger Logger = logger;
 
         /// <summary>
         /// 当前登录用户的ID

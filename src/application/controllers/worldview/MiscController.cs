@@ -15,12 +15,8 @@ namespace talearc_backend.src.application.controllers.worldview;
 [Authorize]
 [ApiController]
 [Route("talearc/api/[controller]")]
-public class MiscController : AuthenticatedControllerBase
+public class MiscController(AppDbContext context, ILogger<MiscController> logger) : AuthenticatedControllerBase(context, logger)
 {
-    public MiscController(AppDbContext context, ILogger<MiscController> logger)
-        : base(context, logger)
-    {
-    }
 
     /// <summary>
     /// 获取用户的杂项（分页）
