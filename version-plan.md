@@ -92,9 +92,9 @@
 
 ### 后端任务
 - [ ] 完善 WorldView 实体与 CRUD API
-- [ ] 完善 Character 实体与 CRUD API
-- [ ] 完善 CharacterSnapshot 实体与 CRUD API
-- [ ] 完善 WorldEvent 实体与 CRUD API
+- [x] 完善 Character 实体与 CRUD API
+- [x] 完善 CharacterSnapshot 实体与 CRUD API
+- [x] 完善 WorldEvent 实体与 CRUD API
 - [x] 完善 Misc 实体与 CRUD API
 - [x] 添加 Novel 实体与 CRUD API
 - [ ] 文章引用关系设计（引用角色/事件/杂项）
