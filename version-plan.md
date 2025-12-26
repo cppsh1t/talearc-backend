@@ -91,7 +91,7 @@
 ## v0.3 - 核心数据模型（当前目标）
 
 ### 后端任务
-- [ ] 完善 WorldView 实体与 CRUD API
+- [x] 完善 WorldView 实体与 CRUD API
 - [x] 完善 Character 实体与 CRUD API
 - [x] 完善 CharacterSnapshot 实体与 CRUD API
 - [x] 完善 WorldEvent 实体与 CRUD API
